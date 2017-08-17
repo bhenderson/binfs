@@ -1,4 +1,6 @@
 // Package main is a command line tool which can take a directory and create a binary file system
+//
+// See example.go for usage.
 package main
 
 import (

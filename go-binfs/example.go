@@ -2,6 +2,8 @@
 
 package main
 
+//go:generate go-binfs -dir /path/to/resources -out resources.go
+
 import (
 	"log"
 	"net/http"
