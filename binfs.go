@@ -15,10 +15,10 @@ import (
 
 var (
 	_ http.FileSystem = fileSystem{}
-	_ http.File       = &FileStat{}
+	_ http.File       = &fileStat{}
 )
 
-type fileSystem map[string]*FileStat
+type fileSystem map[string]*fileStat
 
 func NewFS() fileSystem {
 	return make(fileSystem)
@@ -40,7 +40,7 @@ func (s fileSystem) Open(name string) (http.File, error) {
 }
 
 func (s fileSystem) Add(path string, name string, size int64, mode os.FileMode, modTime string, isDir bool, data string) {
-	fs := &FileStat{
+	fs := &fileStat{
 		name:  name,
 		size:  size,
 		mode:  mode,
@@ -66,7 +66,7 @@ func (s fileSystem) addDir(name string) {
 	}
 }
 
-type FileStat struct {
+type fileStat struct {
 	name    string
 	size    int64
 	mode    os.FileMode
@@ -77,16 +77,16 @@ type FileStat struct {
 	bytes.Reader
 }
 
-func (fs *FileStat) Name() string               { return fs.name }
-func (fs *FileStat) Size() int64                { return fs.size }
-func (fs *FileStat) Mode() os.FileMode          { return fs.mode }
-func (fs *FileStat) ModTime() time.Time         { return fs.modTime }
-func (fs *FileStat) IsDir() bool                { return fs.isDir }
-func (fs *FileStat) Sys() interface{}           { return "binfs" }
-func (fs *FileStat) Close() error               { return nil }
-func (fs *FileStat) Stat() (os.FileInfo, error) { return fs, nil }
+func (fs *fileStat) Name() string               { return fs.name }
+func (fs *fileStat) Size() int64                { return fs.size }
+func (fs *fileStat) Mode() os.FileMode          { return fs.mode }
+func (fs *fileStat) ModTime() time.Time         { return fs.modTime }
+func (fs *fileStat) IsDir() bool                { return fs.isDir }
+func (fs *fileStat) Sys() interface{}           { return "binfs" }
+func (fs *fileStat) Close() error               { return nil }
+func (fs *fileStat) Stat() (os.FileInfo, error) { return fs, nil }
 
-func (fs *FileStat) Readdir(n int) ([]os.FileInfo, error) {
+func (fs *fileStat) Readdir(n int) ([]os.FileInfo, error) {
 	if !fs.isDir {
 		return nil, os.ErrInvalid
 	}
