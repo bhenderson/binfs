@@ -18,7 +18,7 @@ var (
 	_ http.File       = &fileStat{}
 )
 
-type fileSystem map[string]*fileStat
+type fileSystem map[string]http.File
 
 func NewFS() fileSystem {
 	return make(fileSystem)
@@ -49,20 +49,19 @@ func (s fileSystem) Add(path string, name string, size int64, mode os.FileMode, 
 
 	marshalTime(&fs.modTime, modTime)
 
-	var buf []byte
-	marshalBytes(&buf, data)
-
+	buf := marshalBytes(data)
 	fs.Reader = *bytes.NewReader(buf)
 
 	s[path] = fs
 
-	s.addDir(path)
+	s.addDir(path, fs)
 }
 
-func (s fileSystem) addDir(name string) {
+func (s fileSystem) addDir(name string, fs *fileStat) {
 	dir := path.Dir(name)
-	if d, ok := s[dir]; ok {
-		d.files = append(d.files, s[name])
+	if v, ok := s[dir]; ok {
+		d := v.(*fileStat)
+		d.files = append(d.files, fs)
 	}
 }
 
@@ -106,17 +105,16 @@ func (fs *fileStat) Readdir(n int) ([]os.FileInfo, error) {
 	return res, nil
 }
 
-func marshalBytes(bp *[]byte, s string) {
+func marshalBytes(s string) []byte {
 	b, err := hex.DecodeString(s)
 	if err != nil {
 		panic(err)
 	}
-	*bp = b
+	return b
 }
 
 func marshalTime(tp *time.Time, s string) {
-	var buf []byte
-	marshalBytes(&buf, s)
+	buf := marshalBytes(s)
 	tp.UnmarshalBinary(buf)
 }
 
