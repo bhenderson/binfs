@@ -1,3 +1,4 @@
+// Package main is a command line tool which can take a directory and create a binary file system
 package main
 
 import (
@@ -24,10 +25,10 @@ func init() { {{range .Files }}
 		"{{.Path}}",
 		"{{.Name}}",
 		{{.Size}},
-		{{printf "0%o" .Mode}},
-		"{{.ModTime.MarshalBinary | printf "%x"}}",
+		{{.Mode | printf "0%o"}},
+		binfs.MustHexDecode("{{.ModTime.MarshalBinary | printf "%x"}}"),
 		{{.IsDir}},
-		"{{.Bytes | printf "%x"}}",
+		binfs.MustHexDecode("{{.Bytes | printf "%x"}}"),
 	){{ end }}
 }
 `))

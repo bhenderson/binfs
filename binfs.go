@@ -14,17 +14,18 @@ import (
 )
 
 var (
-	_ http.FileSystem = fileSystem{}
+	_ http.FileSystem = FileSystem{}
 	_ http.File       = &fileStat{}
 )
 
-type fileSystem map[string]http.File
+type FileSystem map[string]http.File
 
-func NewFS() fileSystem {
-	return make(fileSystem)
+func NewFS() FileSystem {
+	return make(FileSystem)
 }
 
-func (s fileSystem) Open(name string) (http.File, error) {
+// Open implements http.FileSystem
+func (s FileSystem) Open(name string) (http.File, error) {
 	// modified from http/fs.go (Dir).Open
 	if filepath.Separator != '/' && strings.ContainsRune(name, filepath.Separator) ||
 		strings.Contains(name, "\x00") {
@@ -39,7 +40,8 @@ func (s fileSystem) Open(name string) (http.File, error) {
 	return f, nil
 }
 
-func (s fileSystem) Add(path string, name string, size int64, mode os.FileMode, modTime string, isDir bool, data string) {
+// Add creates a new http.File from the parameters and adds it to FileSystem
+func (s FileSystem) Add(path string, name string, size int64, mode os.FileMode, modTimeBinary []byte, isDir bool, data []byte) {
 	fs := &fileStat{
 		name:  name,
 		size:  size,
@@ -47,17 +49,13 @@ func (s fileSystem) Add(path string, name string, size int64, mode os.FileMode, 
 		isDir: isDir,
 	}
 
-	marshalTime(&fs.modTime, modTime)
-
-	buf := marshalBytes(data)
-	fs.Reader = *bytes.NewReader(buf)
-
-	s[path] = fs
-
-	s.addDir(path, fs)
+	fs.modTime.UnmarshalBinary(modTimeBinary)
+	fs.Reader = *bytes.NewReader(data)
+	s.add(path, fs)
 }
 
-func (s fileSystem) addDir(name string, fs *fileStat) {
+func (s FileSystem) add(name string, fs *fileStat) {
+	s[name] = fs
 	dir := path.Dir(name)
 	if v, ok := s[dir]; ok {
 		d := v.(*fileStat)
@@ -105,7 +103,7 @@ func (fs *fileStat) Readdir(n int) ([]os.FileInfo, error) {
 	return res, nil
 }
 
-func marshalBytes(s string) []byte {
+func MustHexDecode(s string) []byte {
 	b, err := hex.DecodeString(s)
 	if err != nil {
 		panic(err)
@@ -113,9 +111,7 @@ func marshalBytes(s string) []byte {
 	return b
 }
 
-func marshalTime(tp *time.Time, s string) {
-	buf := marshalBytes(s)
-	tp.UnmarshalBinary(buf)
+func marshalTime(tp *time.Time, buf []byte) {
 }
 
 func matchDir(dir, name string) bool {
