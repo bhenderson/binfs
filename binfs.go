@@ -110,10 +110,3 @@ func MustHexDecode(s string) []byte {
 	}
 	return b
 }
-
-func marshalTime(tp *time.Time, buf []byte) {
-}
-
-func matchDir(dir, name string) bool {
-	return false
-}
