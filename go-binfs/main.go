@@ -12,6 +12,8 @@ import (
 	"os"
 	"path/filepath"
 	"text/template"
+
+	"github.com/bhenderson/binfs"
 )
 
 var outTemplate = template.Must(template.New("out").
@@ -23,15 +25,7 @@ import "github.com/bhenderson/binfs"
 var binFS = binfs.NewFS()
 
 func init() { {{range .Files }}
-	binFS.Add(
-		"{{.Path}}",
-		"{{.Name}}",
-		{{.Size}},
-		{{.Mode | printf "0%o"}},
-		binfs.MustHexDecode("{{.ModTime.MarshalBinary | printf "%x"}}"),
-		{{.IsDir}},
-		binfs.MustHexDecode("{{.Bytes | printf "%x"}}"),
-	){{ end }}
+	binFS.Add({{.GenerateFields}}){{ end }}
 }
 `))
 
@@ -39,7 +33,7 @@ var data = struct {
 	PackageName string
 	Dir         string
 	Output      string
-	Files       []FileStat
+	Files       []*binfs.FileStat
 }{}
 
 func main() {
@@ -58,7 +52,9 @@ func main() {
 	fatal(err)
 
 	filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
-		data.Files = append(data.Files, copyFileStat(path, info))
+		fs, err := binfs.Generate(path, info)
+		fatal(err)
+		data.Files = append(data.Files, fs)
 		return nil
 	})
 
@@ -79,34 +75,6 @@ func main() {
 	}
 
 	ioutil.WriteFile(data.Output, out, 0666)
-}
-
-type FileStat struct {
-	Path string
-	os.FileInfo
-	Bytes []byte
-}
-
-func copyFileStat(filePath string, info os.FileInfo) FileStat {
-	fs := FileStat{
-		Path:     filePath,
-		FileInfo: info,
-	}
-
-	if fs.IsDir() {
-		return fs
-	}
-
-	file, err := os.Open(filePath)
-	if err != nil {
-		panic(err)
-	}
-	fs.Bytes, err = ioutil.ReadAll(file)
-	if err != nil {
-		panic(err)
-	}
-
-	return fs
 }
 
 func fatal(err error) {
