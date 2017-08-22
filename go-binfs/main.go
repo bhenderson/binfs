@@ -22,15 +22,16 @@ package {{.PackageName}}
 
 import "github.com/bhenderson/binfs"
 
-var binFS = binfs.NewFS()
-
-func init() { {{range .Files }}
-	binFS.Add({{.GenerateFields}}){{ end }}
+func init() {
+	var fs = binfs.GetFS("{{.Name}}")
+	{{range .Files }}
+	fs.Add({{.GenerateFields}}){{ end }}
 }
 `))
 
 var data = struct {
 	PackageName string
+	Name        string
 	Dir         string
 	Output      string
 	Files       []*binfs.FileStat
@@ -38,6 +39,7 @@ var data = struct {
 
 func main() {
 	flag.StringVar(&data.PackageName, "packagename", "main", "package name")
+	flag.StringVar(&data.Name, "name", "", "reference name")
 	flag.StringVar(&data.Dir, "dir", ".", "directory to get files")
 	flag.StringVar(&data.Output, "out", "binfs.go", "name of output file")
 	flag.Parse()

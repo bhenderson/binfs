@@ -20,12 +20,19 @@ var (
 	_ http.FileSystem = FileSystem{}
 	_ http.File       = &FileStat{}
 	_ os.FileInfo     = &FileStat{}
+
+	fileSystems = make(map[string]FileSystem)
 )
 
 type FileSystem map[string]http.File
 
-func NewFS() FileSystem {
-	return make(FileSystem)
+func GetFS(name string) FileSystem {
+	fs, ok := fileSystems[name]
+	if !ok {
+		fs = make(FileSystem)
+		fileSystems[name] = fs
+	}
+	return fs
 }
 
 // Open implements http.FileSystem

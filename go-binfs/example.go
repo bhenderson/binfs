@@ -7,10 +7,12 @@ package main
 import (
 	"log"
 	"net/http"
+
+	"github.com/bhenderson/binfs"
 )
 
 func main() {
-	http.Handle("/", http.FileServer(binFS))
+	http.Handle("/", http.FileServer(binfs.GetFS("")))
 
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
